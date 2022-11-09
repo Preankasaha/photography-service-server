@@ -1,6 +1,6 @@
 const express = require('express');
 const cors = require('cors');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
 const app = express();
@@ -25,8 +25,10 @@ async function run() {
 
 
     try {
-        const serviceCollection = client.db('photographyDb').collection('services');
+        const serviceCollection = client.db('photographdb').collection('services');
+        const reviewCollection = client.db('photographdb').collection('reviews')
 
+        // service api
 
         app.get('/services', async (req, res) => {
             const query = {}
@@ -34,6 +36,18 @@ async function run() {
             const services = await cursor.toArray();
             res.send(services);
         });
+        // service detaias api
+
+        app.get('/services/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const service = await serviceCollection.findOne(query);
+            res.send(service);
+        });
+
+
+
+
     }
     finally {
 
