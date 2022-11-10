@@ -15,11 +15,17 @@ console.log(process.env.DB_PASSWORD);
 
 
 
+
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.fwkvzgi.mongodb.net/?retryWrites=true&w=majority`;
-console.log(uri);
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
 
+
+// const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.fwkvzgi.mongodb.net/?retryWrites=true&w=majority`;
+// console.log(uri);
+// const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
+
+// // const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 }, { connectTimeoutMS: 30000 }, { keepAlive: 1 });
 
 async function run() {
 
@@ -36,7 +42,15 @@ async function run() {
             const services = await cursor.toArray();
             res.send(services);
         });
-        // service detaias api
+        //service api for limit
+        app.get('/serviceswithlimit', async (req, res) => {
+            const query = {}
+            const cursor = serviceCollection.find(query);
+            const services = await cursor.limit(3).toArray();
+            res.send(services);
+        });
+
+        // service deta by id api
 
         app.get('/services/:id', async (req, res) => {
             const id = req.params.id;
@@ -45,15 +59,31 @@ async function run() {
             res.send(service);
         });
 
+
+        // review api by serviceID
+        app.get('/reviews', async (req, res) => {
+            let query = {};
+
+            if (req.query.serviceID) {
+                query = { 'review.serviceId': req.query.service };
+            }
+
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+        
+
+        // reviews post api
         app.post('/reviews', async (req, res) => {
             const review = req.body;
-            console.log(review);
-            const result = await reviewCollection.insertOne(review);
-            console.log(result);
+            console.log([{ review, time: new Date() }]);
+            const result = await reviewCollection.insertMany([{ review: review, time: new Date() }]);
             res.send(result);
         });
 
-
+        
 
     }
     finally {
