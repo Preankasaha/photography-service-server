@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const jwt = require('jsonwebtoken')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 
@@ -12,6 +13,7 @@ app.use(express.json());
 
 console.log(process.env.DB_USER);
 console.log(process.env.DB_PASSWORD);
+console.log(process.env.ACCESS_TOKEN_SECRET);
 
 
 
@@ -27,16 +29,37 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 // // const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 }, { connectTimeoutMS: 30000 }, { keepAlive: 1 });
 
+function verifyJWT(req, res, next) {
+    console.log(req.headers.authorization);
+    const authHeader = req.headers.authorization;
+    if (!authHeader) {
+        res.send(401)({ message: 'unauthorized access' });
+    }
+    const token = authHeader.split(' ')[1];
+
+    // jwt verify function
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
+        if (err) {
+            return res.status(403).send({ message: 'Forbidden access' });
+        }
+        req.decoded = decoded;
+        next();
+    })
+}
 
 
-// jwt verify function
+
 async function run() {
 
 
     try {
         const serviceCollection = client.db('photographdb').collection('services');
         const reviewCollection = client.db('photographdb').collection('reviews')
-
+        app.post('/jwt', (req, res) => {
+            const user = req.body;
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            res.send({ token })
+        })
         // service api
 
         app.get('/services', async (req, res) => {
@@ -77,7 +100,13 @@ async function run() {
         });
 
         // review get api by email
-        app.get('/myreviews', async (req, res) => {
+        app.get('/myreviews', verifyJWT, async (req, res) => {
+            const decoded = req.decoded;
+            console.log('inside orders api', decoded);
+            if (decoded.email !== req.query.email) {
+                res.status(403).send({ message: 'unauthorized access' })
+            }
+
             let query = {};
 
             if (req.query.email) {
