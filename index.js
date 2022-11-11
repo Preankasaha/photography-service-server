@@ -57,7 +57,7 @@ async function run() {
         const reviewCollection = client.db('photographdb').collection('reviews')
         app.post('/jwt', (req, res) => {
             const user = req.body;
-            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' })
+            const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '7d' })
             res.send({ token })
         })
         // service api
@@ -94,7 +94,7 @@ async function run() {
                 query = { 'review.serviceId': req.query.service };
             }
 
-            const cursor = reviewCollection.find(query);
+            const cursor = reviewCollection.find(query).sort({ time: -1 });
             const reviews = await cursor.toArray();
             res.send(reviews);
         });
