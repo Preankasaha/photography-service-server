@@ -125,7 +125,12 @@ async function run() {
             const result = await reviewCollection.deleteOne(query);
             res.send(result);
         });
-       
+        //Add service api
+        app.post('/services', async (req, res) => {
+            const services = req.body;
+            const result = await serviceCollection.insertOne(services);
+            res.send(result);
+        });
     }
     finally {
 
