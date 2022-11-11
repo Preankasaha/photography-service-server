@@ -27,6 +27,9 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 // // const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 }, { connectTimeoutMS: 30000 }, { keepAlive: 1 });
 
+
+
+// jwt verify function
 async function run() {
 
 
@@ -73,7 +76,25 @@ async function run() {
             res.send(reviews);
         });
 
-        
+        // review get api by email
+        app.get('/myreviews', async (req, res) => {
+            let query = {};
+
+            if (req.query.email) {
+                query = { 'review.email': req.query.email };
+            }
+
+            const cursor = reviewCollection.find(query);
+            const reviews = await cursor.toArray();
+            res.send(reviews);
+        });
+
+        app.get('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const review = await reviewCollection.findOne(query);
+            res.send(review);
+        });
 
         // reviews post api
         app.post('/reviews', async (req, res) => {
@@ -83,8 +104,28 @@ async function run() {
             res.send(result);
         });
 
-        
+        app.patch('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            const review = req.body
+            const query = { _id: ObjectId(id) }
+            const updatedDoc = {
+                $set: {
+                    review: review
 
+                }
+            }
+            const result = await orderCollection.updateOne(query, updatedDoc);
+            res.send(result);
+        })
+
+        app.delete('/reviews/:id', async (req, res) => {
+            const id = req.params.id;
+            console.log(id);
+            const query = { _id: ObjectId(id) };
+            const result = await reviewCollection.deleteOne(query);
+            res.send(result);
+        });
+       
     }
     finally {
 
